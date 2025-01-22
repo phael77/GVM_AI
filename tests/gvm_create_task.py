@@ -12,7 +12,12 @@ path = os.getenv('GVMD_SOCKET_PATH')
 username = os.getenv('GVMD_USERNAME')
 password = os.getenv('GVMD_PASSWORD')
 host = os.getenv('GVMD_HOST')
-port_list_name = os.getenv('GVMD_PORT_LIST_NAME')  # Nome da lista de portas desejada
+port_list_name = os.getenv('GVMD_PORT_LIST_NAME')
+credential_id = os.getenv('GVMD_CREDENTIAL_ID')
+
+# Validar variáveis de ambiente
+if not all([path, username, password, host, port_list_name, credential_id]):
+    raise Exception("Algumas variáveis de ambiente não foram configuradas corretamente.")
 
 # Estabelecer conexão com o Unix Socket
 connection = UnixSocketConnection(path=path)
@@ -34,6 +39,7 @@ with GMP(connection=connection, transform=transform) as gmp:
 
         if not port_list_id:
             raise Exception(f"Port list '{port_list_name}' not found.")
+        print(f"Port List ID: {port_list_id}")
 
         # Verificar se o alvo já existe
         targets = gmp.get_targets()
@@ -52,6 +58,7 @@ with GMP(connection=connection, transform=transform) as gmp:
                 port_list_id=port_list_id,
             )
             target_id = target.get("id")
+        print(f"Target ID: {target_id}")
 
         # Obter ID de configuração (Scan Configuration)
         configs = gmp.get_scan_configs()
@@ -63,31 +70,33 @@ with GMP(connection=connection, transform=transform) as gmp:
 
         if not config_id:
             raise Exception("Scan configuration 'Full and fast' not found.")
+        print(f"Config ID: {config_id}")
 
-        # Obter ID do scanner
-        scanners = gmp.get_scanners()
-        scanner_id = None
-        for scanner in scanners.findall('scanner'):
-            if scanner.findtext('name') == 'OpenVAS Default':  # Use o nome apropriado
-                scanner_id = scanner.get('id')
-                break
-
-        if not scanner_id:
-            raise Exception("Scanner 'OpenVAS Default' not found.")
+        # Criar um scanner
+        scanner = gmp.create_scanner(
+            name="Remote Scanner",
+            host=host,
+            port="9391",  # Substitua pela porta correta do scanner
+            scanner_type="2",  # '2' é para o OpenVAS
+            credential_id=credential_id,  # Certifique-se de que esse ID seja válido
+            comment="Scanner para a rede remota"
+        )
+        scanner_id = scanner.get("id")
+        print(f"Scanner ID: {scanner_id}")
 
         # Criar uma tarefa usando o ID do alvo, configuração e scanner
         task = gmp.create_task(
-            name="My Task",
+            name="Teste 2",
             config_id=config_id,
             target_id=target_id,
             scanner_id=scanner_id,
         )
+        task_id = task.get("id")
+        print(f"Task ID: {task_id}")
 
-        print(task)
-        
-        run_task = gmp.start_task(task_id=task.get('id'))
-        print(run_task)
+        # Iniciar a tarefa
+        run_task = gmp.start_task(task_id=task_id)
+        print(f"Task started: {run_task}")
 
     except Exception as e:
         print(f"Erro: {e}")
-
