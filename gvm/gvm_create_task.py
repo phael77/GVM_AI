@@ -64,7 +64,7 @@ with GMP(connection=connection, transform=transform) as gmp:
             raise Exception("Scanner 'OpenVAS Default' not found.")
         # Criar uma tarefa usando o ID do alvo, configuração e scanner
         task = gmp.create_task(
-            name="Teste agora",
+            name="GOGOGO",
             config_id=config_id,
             target_id=target_id,
             scanner_id=scanner_id,

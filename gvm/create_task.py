@@ -20,3 +20,41 @@ class AuthencationManager:
         
     def authenticate(self, gmp):
         gmp.authenticate(self.__username, self.__password)
+        
+class PortListManager:
+    def __init__(self, port_list_name):
+        self.__port_list_name = port_list_name
+        
+    def get_port_list_id(self, gmp):
+        """Obtém o ID da lista de portas pelo nome."""
+        port_lists = gmp.get_port_lists()
+        for port_list in port_lists.findall('port_list'):
+            if port_list.findtext('name') == self.port_list_name:
+                return port_list.get('id')
+        raise Exception(f"Port list '{self.__port_list_name}' not found.")
+    
+class TargetManager:
+    def __init__(self, host, port_list_manager):
+        self.__host = host
+        self.__port_list_manager = port_list_manager
+        
+    def get_host(self):
+        return self.__host
+    
+    def get_port_list_manager(self):
+        return self.__port_list_manager
+            
+    def get_target_id(self, gmp):
+        """Obtém o ID do alvo pelo nome do host."""
+        targets = gmp.get_targets()
+        for target in targets.findall('target'):
+            if target.findtext('name') == "My Target" or target.findtext('hosts') == self.__host:
+                return target.get('id')
+        port_list_id = self.__port_list_manager.get_port_list_id(gmp)
+        target = gmp.create_target(
+            name="My Target",
+            hosts=[self.__host],
+            comment="My Target",
+            port_list_id=port_list_id,  
+        )
+        return target.get("id")
