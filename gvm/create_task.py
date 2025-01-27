@@ -58,3 +58,31 @@ class TargetManager:
             port_list_id=port_list_id,  
         )
         return target.get("id")
+    
+class ConfigManager:
+    def get_config_id(self, gmp):
+        configs = gmp.get_configs()
+        for config in configs('config'):
+            if config.findtext('name') == "Full and fast":
+                return config.get('id')
+        raise Exception("Scan Configuration 'Full and fast' not found.")
+            
+class ScannerManager:
+    def get_scanner_id(self, gmp):
+        scanners = gmp.get_scanners()
+        for scanner in scanners.findall('scanner'):
+            if scanner.findtext('name') == "OpenVAS Default":
+                return scanner.get('id')
+        raise Exception("Scanner 'OpenVAS Default' not found.")
+    
+class TaskCreator:
+    def __init__(self):
+        pass
+    
+    def create_task(self, gmp, target_id, config_id, scanner_id):
+        return gmp.create_task(
+            name=name,
+            target_id=target_id,
+            config_id=config_id,
+            scanner_id=scanner_id,
+        )
